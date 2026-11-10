@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz Quest</title>
+<style>
+:root{--bg:#e9f1ee;--ink:#12332b;--card:#fff;--line:#c4d6cf;--gold:#e8a317;--ok:#1f8a5b;--bad:#c2412d;--mute:#5b7a70}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1f1a;--ink:#e6f2ed;--card:#16302a;--line:#2b4a42;--mute:#92b3a8}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 Georgia,"Times New Roman",serif;min-height:100vh}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:2rem;margin:.2em 0}
+h2{font-size:1.35rem;line-height:1.35;margin:.4em 0 .8em}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:system-ui,sans-serif;font-size:.9rem;color:var(--mute)}
+.coins{background:var(--gold);color:#3a2800;font-weight:700;padding:3px 12px;border-radius:999px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:16px}
+button,select,textarea,input{font:inherit}
+.opt{display:block;width:100%;text-align:left;margin:8px 0;padding:12px 14px;border-radius:10px;border:2px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt:focus-visible,.btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,transparent)}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 16%,transparent)}
+.btn{font-family:system-ui,sans-serif;font-weight:600;background:var(--ink);color:var(--bg);border:0;border-radius:10px;padding:11px 20px;cursor:pointer}
+.btn.alt{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.progress{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:12px}
+.progress i{display:block;height:100%;background:var(--ok);transition:width .3s}
+.fb{margin-top:12px;font-family:system-ui,sans-serif;font-size:.95rem}
+.fb b.g{color:var(--ok)}.fb b.r{color:var(--bad)}
+textarea{width:100%;min-height:110px;border:2px solid var(--line);border-radius:10px;padding:10px;background:transparent;color:var(--ink);font:13px/1.4 ui-monospace,Consolas,monospace}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.badge{font-family:system-ui,sans-serif;font-size:.85rem;padding:6px 12px;border-radius:999px;border:2px solid var(--gold)}
+.badge.off{opacity:.35;border-style:dashed}
+.big{font-size:3.2rem;margin:0}
+.track{position:relative;height:98px;margin:18px 22px 0 22px}
+.roadwrap{position:absolute;left:0;right:46px;top:0;bottom:0}
+.road{position:absolute;left:-12px;right:-34px;bottom:26px;height:10px;border-radius:6px;background:repeating-linear-gradient(90deg,var(--line) 0 18px,transparent 18px 26px);border-bottom:4px solid var(--line)}
+.kid{position:absolute;bottom:32px;transform:translateX(-50%);transition:left .6s ease;font-size:2.1rem;line-height:1;z-index:2}
+.kid span{display:inline-block}
+.kid .hop{animation:hop .5s}.kid .back{animation:back .5s}
+@keyframes hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-16px) rotate(8deg)}}
+@keyframes back{0%,100%{transform:scaleX(1)}30%,70%{transform:scaleX(-1) translateX(4px)}}
+.flag{position:absolute;bottom:30px;transform:translateX(-50%);font-size:1.2rem;line-height:1;text-align:center;filter:grayscale(1);opacity:.55}
+.flag small{display:block;font-size:.65rem}
+.flag.on{filter:none;opacity:1}
+.bakery{position:absolute;right:-8px;bottom:6px;font-size:2.6rem;line-height:1;text-align:center}
+.bakery small{display:block;font-size:.7rem}
+.status{text-align:center;margin-top:6px;font-family:system-ui,sans-serif;font-size:.9rem;color:var(--mute);min-height:1.4em}
+.status.ms{color:var(--ink);font-weight:700;font-size:1.05rem}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}
+.confetti span{position:absolute;top:-40px;animation:fall 1.8s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg)}}
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0}
+.chip{font-family:system-ui,sans-serif;font-size:1.5rem;font-weight:700;min-width:62px;padding:12px 16px;border-radius:12px;border:2px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.chip.sel{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 30%,transparent)}
+.chip.done{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,transparent);cursor:default}
+.chip:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.match{display:flex;gap:40px;justify-content:center}
+.match>div{display:flex;flex-direction:column;gap:10px}
+.seq{display:flex;gap:10px;flex-wrap:wrap;font:700 1.7rem system-ui,sans-serif;margin:6px 0 14px}
+.seq span{min-width:52px;text-align:center;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--line) 60%,transparent)}
+.pics{font-size:2rem;line-height:1.6;margin:6px 0 14px;letter-spacing:.15em;word-break:break-word}
+.pq{margin:4px 0 14px}
+.pq .bigpic{font-size:4rem;line-height:1.1;display:block}
+.pq .word{font:700 1.2rem system-ui,sans-serif}
+.chip.em{font-size:2.3rem;line-height:1.2}
+.chip.grp{font-size:1.4rem;line-height:1.3;flex:1 1 40%;max-width:48%}
+.swatch{display:inline-block;width:46px;height:46px;border-radius:50%;border:3px solid rgba(0,0,0,.25);vertical-align:middle}
+.shake{animation:shake .35s}@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.kid{transition:none}.kid .hop,.kid .back,.shake{animation:none}}
+.pop{animation:pop .5s}@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}.progress i{transition:none}}
+small,.mute{color:var(--mute);font-family:system-ui,sans-serif;font-size:.85rem}
+.err{color:var(--bad);font-family:system-ui,sans-serif;font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+  <div class="bar"><span id="who">Quiz Quest</span><span class="coins" id="wallet">0 coins</span></div>
+  <div id="trackbox"></div>
+  <div id="app"></div>
+</main>
+
+<script>
+// ---------- Sample questions (replace via "Load questions") ----------
+const SAMPLE = [
+ {question:"Which planet is known as the Red Planet?",options:["Venus","Mars","Jupiter","Mercury"],answer:1,explanation:"Iron oxide on its surface gives Mars a reddish colour."},
+ {question:"What is the capital of Australia?",options:["Sydney","Melbourne","Canberra","Perth"],answer:2,explanation:"Canberra was purpose-built as the capital."},
+ {question:"How many bits are in one byte?",options:["4","8","16","32"],answer:1,explanation:"A byte is 8 bits."},
+ {question:"Which gas do plants absorb for photosynthesis?",options:["Oxygen","Nitrogen","Carbon dioxide","Hydrogen"],answer:2,explanation:"Plants take in CO2 and release oxygen."},
+ {question:"What does HTML stand for?",options:["HyperText Markup Language","High Transfer Mode Language","Hyper Tool Multi Language","Home Text Markup Level"],answer:0,explanation:"HTML structures web pages."}
+];
+const PROMPT = `Create 20 multiple-choice quiz questions from the sources. Reply with ONLY a JSON array, no extra text. Format:
+[{"question":"...","options":["A","B","C","D"],"answer":1,"explanation":"..."}]
+"answer" is the zero-based index of the correct option.`;
+
+// ---------- Storage (safe if blocked) ----------
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}};
+let save=store.get("qq",{coins:0,best:0,badges:[],bank:null});
+if(typeof save.name!=="string")save.name="";
+const RESET_KEY="DJANGO";
+
+const BADGES={
+ first:["First win","Answer one correctly"],
+ streak3:["On fire","3 correct in a row"],
+ streak5:["Unstoppable","5 correct in a row"],
+ perfect:["Flawless","Score 100% in a round"],
+ rich:["Coin hoarder","Collect 100 coins in total"]
+};
+const $=s=>document.querySelector(s),app=$("#app");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function wallet(){$("#wallet").textContent=save.coins+" coins";$("#who").textContent=save.name||"Quiz Quest"}
+function persist(){const ok=store.set("qq",save);wallet();return ok}
+
+// ---------- Question parsing: accepts several common shapes ----------
+function normalise(raw){
+  let data=typeof raw==="string"?JSON.parse(raw.replace(/^```(?:json)?|```$/gim,"").trim()):raw;
+  if(!Array.isArray(data)) data=data.questions||data.quiz||[];
+  const out=data.map(q=>{
+    const text=q.question||q.q||q.text;
+    let opts=q.options||q.answerOptions||q.choices||q.answers;
+    if(!text||!Array.isArray(opts)||opts.length<2) return null;
+    let ans=q.answer!==undefined?q.answer:q.correct!==undefined?q.correct:q.correctAnswer;
+    let texts=opts.map(o=>typeof o==="string"?o:(o.text||o.answer||""));
+    let idx=opts.findIndex(o=>typeof o==="object"&&(o.isCorrect||o.correct));
+    if(idx<0){
+      if(typeof ans==="number") idx=ans;
+      else if(typeof ans==="string"){
+        const L="ABCDEFGH".indexOf(ans.trim().toUpperCase());
+        idx=ans.trim().length===1&&L>=0?L:texts.findIndex(t=>t.trim().toLowerCase()===ans.trim().toLowerCase());
+      }
+    }
+    if(idx<0||idx>=texts.length) return null;
+    return {q:String(text),o:texts,a:idx,e:q.explanation||q.rationale||q.hint||""};
+  }).filter(Boolean);
+  if(!out.length) throw new Error("No valid questions found. Check the format.");
+  return out;
+}
+// ---------- Question bank: preset file (questions.json) + optional player-loaded set ----------
+let bank=normalise(SAMPLE),presetBank=null,presetHow="",bankSource="built-in sample questions";
+const canon=list=>list.map(x=>({question:x.q,options:x.o,answer:x.a,explanation:x.e}));
+async function loadPreset(){
+  let list=null,how="";
+  try{
+    const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),5000);
+    const r=await fetch("questions.json",{cache:"no-cache",signal:ac.signal});
+    clearTimeout(tm);
+    if(r.ok){
+      list=normalise(await r.text());how="questions.json";
+      try{localStorage.setItem("qq_preset",JSON.stringify(canon(list)))}catch(e){}
+    }
+  }catch(e){}
+  if(!list){ // offline or opened as a local file: use the last copy that loaded successfully
+    try{const c=localStorage.getItem("qq_preset");if(c){list=normalise(JSON.parse(c));how="saved copy of questions.json"}}catch(e){}
+  }
+  presetBank=list;presetHow=how;
+}
+function applyBank(){
+  if(save.custom&&save.bank){try{bank=normalise(save.bank);bankSource="questions you loaded";return}catch(e){}}
+  if(presetBank){bank=presetBank;bankSource=presetHow}
+  else{bank=normalise(SAMPLE);bankSource="built-in sample questions"}
+}
+
+// ---------- Screens ----------
+function home(msg,isErr){
+  $("#trackbox").innerHTML="";
+  const earned=save.badges,max=bank.length;
+  const n0=Math.min(Math.max(1,save.n||10),max);
+  const presets=[5,10,20,50,100].filter(x=>x<max);
+  app.innerHTML=`
+  <div class="card">
+    <label for="pname"><b>Player name</b></label>
+    <div class="row"><input id="pname" maxlength="24" autocomplete="off" placeholder="Enter your name" value="${esc(save.name)}" style="flex:1;min-width:180px;padding:10px;border:2px solid var(--line);border-radius:10px;background:transparent;color:var(--ink)"></div>
+  </div>
+  <div class="card">
+    <h1>${save.name?"Ready, "+esc(save.name)+"?":"Ready to play?"}</h1>
+    <p>${max} question${max===1?"":"s"} in the bank (${bankSource}). Each correct answer earns 10 points and a coin. Streaks add bonus points.</p>
+    <div class="row">
+      <label>Questions this round <input type="number" id="n" min="1" max="${max}" value="${n0}" style="width:5.5em;padding:6px;border:2px solid var(--line);border-radius:8px;background:transparent;color:var(--ink)"></label>
+      ${presets.map(x=>`<button class="btn alt pre" data-n="${x}">${x}</button>`).join("")}
+      <button class="btn alt pre" data-n="${max}">All ${max}</button>
+    </div>
+    <div class="row"><button class="btn" id="go">Start quiz</button></div>
+    <p class="mute">Best score: ${save.best}</p>
+  </div>
+  <div class="card">
+    <h2>Load your question bank</h2>
+    <p class="mute">Paste JSON or open one or more .json files.</p>
+    <textarea id="paste" placeholder='[{"question":"...","options":["A","B","C","D"],"answer":1,"explanation":"..."}]'></textarea>
+    <label class="mute" style="display:block;margin-top:10px"><input type="checkbox" id="add"> Add to current questions instead of replacing them</label>
+    <div class="row">
+      <button class="btn alt" id="use">Use pasted questions</button>
+      <label class="btn alt">Open .json file(s)<input type="file" id="file" accept=".json,.txt" multiple hidden></label>
+      <button class="btn alt" id="copyp">Copy AI prompt</button>
+      <button class="btn alt" id="reset">Use preset questions</button>
+    </div>
+    <p class="${isErr?"err":"mute"}" id="msg">${msg||""}</p>
+  </div>
+  <div class="card">
+    <h2>Badges</h2>
+    <div class="badges">${Object.entries(BADGES).map(([k,[n,d]])=>`<span class="badge ${earned.includes(k)?"":"off"}" title="${d}">${n}: ${d}</span>`).join("")}</div>
+  </div>
+  <div class="card">
+    <h2>Reset game</h2>
+    <p class="mute">Enter the secret keyword to clear coins, best score and badges. Your questions and name are kept.</p>
+    <div class="row">
+      <input id="rkey" type="password" autocomplete="off" placeholder="Secret keyword" style="padding:10px;border:2px solid var(--line);border-radius:10px;background:transparent;color:var(--ink)">
+      <button class="btn alt" id="rbtn">Reset game</button>
+    </div>
+    <p class="mute" id="rmsg"></p>
+  </div>`;
+  const inp=$("#n");
+  $("#pname").oninput=e=>{save.name=e.target.value.trim().slice(0,24);persist()};
+  const doReset=()=>{
+    const k=$("#rkey").value.trim();
+    if(k.toUpperCase()===RESET_KEY){
+      save.coins=0;save.best=0;save.badges=[];persist();
+      home("");$("#rmsg").textContent="Game reset. Coins, best score and badges are cleared."
+    }else{$("#rmsg").className="err";$("#rmsg").textContent=k?"Wrong keyword.":"Enter the keyword first."}
+  };
+  $("#rbtn").onclick=doReset;
+  $("#rkey").onkeydown=e=>{if(e.key==="Enter")doReset()};
+  app.querySelectorAll(".pre").forEach(b=>b.onclick=()=>{inp.value=b.dataset.n});
+  $("#go").onclick=()=>{
+    const n=Math.min(Math.max(1,parseInt(inp.value,10)||1),max);
+    save.n=n;persist();play(n);
+  };
+  // texts: array of JSON strings; the first replaces the bank unless "add" is ticked
+  const load=texts=>{
+    try{
+      let merged=$("#add").checked?bank:[];
+      let added=0;
+      for(const t of texts){
+        const seen=new Set(merged.map(x=>x.q));
+        const fresh=normalise(t).filter(x=>!seen.has(x.q));
+        added+=fresh.length;merged=merged.concat(fresh);
+      }
+      if(!merged.length) throw new Error("No new questions found.");
+      bank=merged;
+      save.bank=canon(bank);save.custom=true;bankSource="questions you loaded";
+      save.n=Math.min(save.n||10,bank.length);
+      const ok=persist();
+      home(`Loaded ${added} question${added===1?"":"s"}; ${bank.length} in the bank.`+(ok?"":" Too large to save in this browser, so they will be gone after you close the page."),!ok);
+    }catch(e){$("#msg").className="err";$("#msg").textContent=e.message}
+  };
+  $("#use").onclick=()=>load([$("#paste").value]);
+  $("#file").onchange=e=>{
+    const fs=[...e.target.files];
+    if(fs.length) Promise.all(fs.map(f=>f.text())).then(load).catch(err=>{$("#msg").className="err";$("#msg").textContent=err.message});
+  };
+  $("#reset").onclick=async()=>{
+    save.bank=null;save.custom=false;await loadPreset();applyBank();
+    save.n=Math.min(save.n||10,bank.length);persist();
+    home(presetBank?"Preset questions restored.":"questions.json could not be loaded, so the built-in sample set is in use.")
+  };
+  $("#copyp").onclick=()=>{(navigator.clipboard?navigator.clipboard.writeText(PROMPT):Promise.reject()).then(()=>{$("#msg").className="mute";$("#msg").textContent="Prompt copied."}).catch(()=>{$("#paste").value=PROMPT;$("#msg").textContent="Clipboard blocked; prompt placed in the box."})};
+}
+
+let S;
+const DIST_RATIO=0.6; // bakery distance = this share of the round's questions (min 2)
+const MSG={25:"A quarter of the way there! ⭐",50:"Halfway to the bakery! 🎈",75:"Almost there. Smell the fresh bread! 🍞"};
+const FX={25:["⭐","✨"],50:["🎈","⭐","✨"],75:["🍪","🧁","🍩"],100:["🥐","🎉","🍞","🧁","🍩"]};
+const TREATS=["🍪","🧁","🍩","🥐","🍰"];
+const rm=()=>window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function play(n){
+  const D=Math.max(Math.min(n,2),Math.ceil(n*DIST_RATIO));
+  const ms=D>1?[25,50,75].map(p=>({pct:p,at:Math.max(1,Math.ceil(p/100*D)),fired:false})).filter(m=>m.at<D):[];
+  S={qs:shuffle(bank).slice(0,n),i:0,score:0,right:0,answered:0,streak:0,maxStreak:0,newBadges:[],pos:0,D,ms,puzzleFor:null,arrived:false};
+  buildTrack();
+  question();
+}
+function buildTrack(){
+  $("#trackbox").innerHTML=`<div class="track" aria-hidden="true">
+    <div class="roadwrap"><div class="road"></div>
+      ${S.ms.map(m=>`<span class="flag" data-p="${m.pct}" style="left:${m.at/S.D*100}%">🚩<small>${m.pct}%</small></span>`).join("")}
+      <span class="kid" id="kid" style="left:0%"><span id="kidi">🧒</span></span>
+    </div>
+    <span class="bakery">🥐<small>Bakery</small></span>
+  </div>
+  <div class="status" id="tstat" aria-live="polite">Walk to the bakery! Right answers step forward, wrong ones step back.</div>`;
+  S.ms.forEach(m=>m.el=$("#trackbox").querySelector(`.flag[data-p="${m.pct}"]`));
+}
+function say(t,big){const e=$("#tstat");e.textContent=t;e.className="status"+(big?" ms pop":"")}
+function moveKid(ok){
+  $("#kid").style.left=(S.pos/S.D*100)+"%";
+  const k=$("#kidi");k.className="";void k.offsetWidth;k.className=ok?"hop":"back";
+  say((ok?"Step forward! ":"Oops, a step back. ")+S.pos+" of "+S.D+" steps to the bakery.");
+}
+function burst(set){
+  if(rm())return;
+  const w=document.createElement("div");w.className="confetti";
+  for(let i=0;i<28;i++){const e=document.createElement("span");e.textContent=set[i%set.length];e.style.left=Math.random()*100+"%";e.style.animationDelay=Math.random()*.5+"s";e.style.fontSize=(16+Math.random()*18)+"px";w.appendChild(e)}
+  document.body.appendChild(w);setTimeout(()=>w.remove(),2600);
+}
+function checkMilestones(){
+  const hit=S.ms.filter(m=>!m.fired&&S.pos>=m.at);
+  if(!hit.length)return;
+  hit.forEach(m=>{m.fired=true;m.el.classList.add("on")});
+  const top=hit[hit.length-1];
+  say(MSG[top.pct],true);burst(FX[top.pct]);
+  S.puzzleFor=top.pct;
+}
+
+function question(){
+  const q=S.qs[S.i];
+  const order=shuffle(q.o.map((t,i)=>i));
+  app.innerHTML=`
+  <div class="card">
+    <div class="bar"><span>Question ${S.i+1} of ${S.qs.length}</span><span>Score ${S.score} · Streak ${S.streak}</span></div>
+    <h2>${esc(q.q)}</h2>
+    <div id="opts">${order.map(i=>`<button class="opt" data-i="${i}">${esc(q.o[i])}</button>`).join("")}</div>
+    <div class="fb" id="fb"></div>
+    <div class="row"><button class="btn" id="next" hidden>Next question</button></div>
+  </div>`;
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(b,q));
+}
+function award(k){if(!save.badges.includes(k)){save.badges.push(k);S.newBadges.push(k)}}
+function answer(btn,q){
+  const pick=+btn.dataset.i,ok=pick===q.a;
+  app.querySelectorAll(".opt").forEach(b=>{b.disabled=true;if(+b.dataset.i===q.a)b.classList.add("right")});
+  let msg;S.answered++;
+  if(ok){
+    S.streak++;S.right++;S.maxStreak=Math.max(S.maxStreak,S.streak);
+    const bonus=Math.min(S.streak-1,5)*2,pts=10+bonus;
+    S.score+=pts;save.coins+=1+(S.streak>=3?1:0);
+    award("first");if(S.streak>=3)award("streak3");if(S.streak>=5)award("streak5");
+    msg=`<b class="g">Correct! +${pts} points</b>${bonus?` (streak bonus +${bonus})`:""}`;
+    S.pos++;
+  }else{
+    btn.classList.add("wrong");S.streak=0;msg=`<b class="r">Not quite.</b>`;
+    S.pos=Math.max(0,S.pos-1);
+  }
+  $("#fb").innerHTML=msg+(q.e?` ${esc(q.e)}`:"");
+  moveKid(ok);
+  S.arrived=S.pos>=S.D;
+  if(S.arrived){say("You reached the bakery! 🥐",true);burst(FX[100])}
+  else checkMilestones();
+  persist();
+  const last=S.arrived||S.i+1===S.qs.length;
+  const nx=$("#next");nx.hidden=false;
+  nx.textContent=S.arrived?"Go inside the bakery":last?"See results":S.puzzleFor?"Milestone puzzle":"Next question";
+  nx.focus();
+  nx.onclick=()=>{
+    const go=()=>{if(last)results();else{S.i++;question()}};
+    if(S.puzzleFor&&!S.arrived){const m=S.puzzleFor;S.puzzleFor=null;puzzle(m,go)}else go();
+  };
+}
+
+// ---------- Milestone puzzles (tap-based, no typing) ----------
+const shake=e=>{e.classList.remove("shake");void e.offsetWidth;e.classList.add("shake")};
+let lastPuz=-1;
+function speak(txt){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.rate=.85;speechSynthesis.speak(u)}catch(e){}}
+function puzzle(pct,done,only){
+  app.innerHTML=`
+  <div class="card">
+    <div class="bar"><span>${pct}% milestone</span><span>Puzzle time</span></div>
+    <h2 id="ptitle"></h2><div id="pbody"></div><div class="fb" id="pfb"></div>
+    <div class="row">${"speechSynthesis" in window?`<button class="btn alt" id="pspeak">🔊 Listen</button>`:""}<button class="btn alt" id="pskip">Skip puzzle</button><button class="btn" id="pgo" hidden>Keep walking</button></div>
+  </div>`;
+  let solved=false;
+  const win=()=>{
+    if(solved)return;solved=true;
+    save.coins+=3;persist();burst(TREATS);
+    $("#pfb").innerHTML=`<b class="g">Solved! +3 coins ${TREATS[Math.floor(Math.random()*TREATS.length)]}</b>`;
+    $("#pskip").hidden=true;$("#pgo").hidden=false;$("#pgo").focus();
+  };
+  let k=only;
+  if(k===undefined){do{k=Math.floor(Math.random()*PUZZLES.length)}while(k===lastPuz&&PUZZLES.length>1);lastPuz=k}
+  PUZZLES[k]($("#ptitle"),$("#pbody"),win);
+  const sp=$("#pspeak");if(sp)sp.onclick=()=>speak($("#ptitle").textContent);
+  $("#pskip").onclick=done;$("#pgo").onclick=done;
+}
+function sortPuzzle(t,b,win){
+  t.textContent="Tap the numbers from smallest to biggest";
+  const nums=[];while(nums.length<4){const n=1+Math.floor(Math.random()*20);if(!nums.includes(n))nums.push(n)}
+  const sorted=nums.slice().sort((x,y)=>x-y);let next=0;
+  b.innerHTML=`<div class="chips">${shuffle(nums).map(n=>`<button class="chip" data-n="${n}">${n}</button>`).join("")}</div>`;
+  b.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+    if(c.disabled)return;
+    if(+c.dataset.n===sorted[next]){c.disabled=true;c.classList.add("done");if(++next===sorted.length)win()}else shake(c);
+  });
+}
+function matchPuzzle(t,b,win){
+  t.textContent="Match each BIG letter with its small letter";
+  const L=shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")).slice(0,4);
+  b.innerHTML=`<div class="match"><div>${L.map(l=>`<button class="chip" data-l="${l}" data-s="u">${l}</button>`).join("")}</div><div>${shuffle(L).map(l=>`<button class="chip" data-l="${l}" data-s="l">${l.toLowerCase()}</button>`).join("")}</div></div>`;
+  let sel=null,left=L.length;
+  b.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+    if(c.disabled)return;
+    if(!sel||sel.dataset.s===c.dataset.s){if(sel)sel.classList.remove("sel");sel=c;c.classList.add("sel");return}
+    if(sel.dataset.l===c.dataset.l){[sel,c].forEach(x=>{x.disabled=true;x.classList.remove("sel");x.classList.add("done")});sel=null;if(--left===0)win()}
+    else{shake(c);sel.classList.remove("sel");sel=null}
+  });
+}
+function patternPuzzle(t,b,win){
+  t.textContent="What number comes next?";
+  const d=[1,2,3,5,10][Math.floor(Math.random()*5)],s0=1+Math.floor(Math.random()*9);
+  const seq=[0,1,2,3].map(i=>s0+i*d),ans=s0+4*d;
+  b.innerHTML=`<div class="seq">${seq.map(n=>`<span>${n}</span>`).join("")}<span>?</span></div><div class="chips">${shuffle([ans,ans+d,ans-1]).map(n=>`<button class="chip" data-n="${n}">${n}</button>`).join("")}</div>`;
+  b.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+    if(c.disabled)return;
+    if(+c.dataset.n===ans){c.classList.add("done");b.querySelectorAll(".chip").forEach(x=>x.disabled=true);win()}else shake(c);
+  });
+}
+
+// ---------- More KG puzzles: one tap on the right picture/number/letter ----------
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const rint=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+function choose(b,win,prompt,opts,cls){
+  b.innerHTML=(prompt?`<div class="pq">${prompt}</div>`:"")+`<div class="chips">${shuffle(opts).map(o=>`<button class="chip ${cls||""}" data-ok="${o.ok?1:0}" aria-label="option">${o.html}</button>`).join("")}</div>`;
+  b.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+    if(c.disabled)return;
+    if(c.dataset.ok==="1"){c.classList.add("done");b.querySelectorAll(".chip").forEach(x=>x.disabled=true);win()}else shake(c);
+  });
+}
+function threeNums(n,lo,hi){const a=[n];while(a.length<3){const x=rint(Math.max(lo,n-3),Math.min(hi,n+3));if(!a.includes(x))a.push(x)}return a}
+const ABC="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+function countPuzzle(t,b,win){
+  t.textContent="Count the pictures. How many are there?";
+  const e=pick(["🍎","⭐","🐟","🎈","🍪","🐥","🌸","🚗"]),n=rint(1,9);
+  choose(b,win,`<div class="pics" aria-hidden="true">${Array(n).fill(e).join(" ")}</div>`,threeNums(n,1,10).map(x=>({html:x,ok:x===n})));
+}
+function missingLetterPuzzle(t,b,win){
+  t.textContent="Which letter is missing?";
+  const st=rint(0,21),gap=rint(0,3),seq=[0,1,2,3].map(i=>ABC[st+i]),ans=seq[gap];
+  const opts=[ans];while(opts.length<3){const x=ABC[rint(0,25)];if(!opts.includes(x))opts.push(x)}
+  choose(b,win,`<div class="seq">${seq.map((l,i)=>`<span>${i===gap?"?":l}</span>`).join("")}</div>`,opts.map(x=>({html:x,ok:x===ans})));
+}
+function biggerPuzzle(t,b,win){
+  const big=Math.random()<.5,x=rint(1,20);let y=rint(1,20);while(y===x)y=rint(1,20);
+  t.textContent=big?"Tap the BIGGER number":"Tap the SMALLER number";
+  const ans=big?Math.max(x,y):Math.min(x,y);
+  choose(b,win,"",[x,y].map(v=>({html:v,ok:v===ans})));
+}
+const WORDS=[["🍎","Apple","A"],["🍌","Banana","B"],["🐱","Cat","C"],["🐶","Dog","D"],["🐘","Elephant","E"],["🐟","Fish","F"],["🍇","Grapes","G"],["🏠","House","H"],["🍦","Ice cream","I"],["🪁","Kite","K"],["🦁","Lion","L"],["🌙","Moon","M"],["🍊","Orange","O"],["🐧","Penguin","P"],["🌈","Rainbow","R"],["☀️","Sun","S"],["🐢","Turtle","T"],["☂️","Umbrella","U"],["🍉","Watermelon","W"],["🦓","Zebra","Z"]];
+function firstLetterPuzzle(t,b,win){
+  t.textContent="What letter does this word start with?";
+  const w=pick(WORDS),opts=[w[2]];while(opts.length<3){const x=pick(WORDS)[2];if(!opts.includes(x))opts.push(x)}
+  choose(b,win,`<span class="bigpic" aria-hidden="true">${w[0]}</span><span class="word">${w[1]}</span>`,opts.map(x=>({html:x,ok:x===w[2]})));
+}
+const SHAPES={circle:"<circle cx='30' cy='30' r='24'/>",square:"<rect x='8' y='8' width='44' height='44'/>",triangle:"<polygon points='30,6 56,54 4,54'/>",star:"<polygon points='30,4 37,22 56,23 41,35 46,54 30,43 14,54 19,35 4,23 23,22'/>"};
+function shapePuzzle(t,b,win){
+  const names=shuffle(Object.keys(SHAPES)),ans=names[0];
+  t.textContent="Tap the "+ans;
+  choose(b,win,"",names.slice(0,3).map(n=>({html:`<svg viewBox="0 0 60 60" width="64" height="64" fill="currentColor" aria-hidden="true">${SHAPES[n]}</svg>`,ok:n===ans})));
+}
+const COLORS={red:"#e53935",blue:"#1e66d0",green:"#2e9e4f",yellow:"#f6c915",orange:"#f57c00",purple:"#8e44ad"};
+function colorPuzzle(t,b,win){
+  const names=shuffle(Object.keys(COLORS)),ans=names[0];
+  t.textContent="Tap the "+ans+" one";
+  choose(b,win,"",names.slice(0,3).map(n=>({html:`<span class="swatch" style="background:${COLORS[n]}"></span>`,ok:n===ans})));
+}
+const GROUPS=[["🍎","🍌","🍇","🍓","🍊"],["🐶","🐱","🐰","🐻","🐸"],["🚗","🚌","🚲","✈️","🚂"]];
+function oddPuzzle(t,b,win){
+  t.textContent="Which one does not belong?";
+  const g=shuffle(GROUPS),same=shuffle(g[0]).slice(0,3),odd=pick(g[1]);
+  choose(b,win,"",same.map(x=>({html:x,ok:false})).concat([{html:odd,ok:true}]),"em");
+}
+function moreGroupPuzzle(t,b,win){
+  const more=Math.random()<.5,e=pick(["🍎","⭐","🐟","🎈","🍪","🐥"]),x=rint(1,8);let y=rint(1,9);while(y===x)y=rint(1,9);
+  t.textContent=more?"Which group has MORE?":"Which group has FEWER?";
+  const ans=more?Math.max(x,y):Math.min(x,y);
+  choose(b,win,"",[x,y].map(v=>({html:Array(v).fill(e).join(" "),ok:v===ans})),"grp");
+}
+const PUZZLES=[sortPuzzle,matchPuzzle,patternPuzzle,countPuzzle,missingLetterPuzzle,biggerPuzzle,firstLetterPuzzle,shapePuzzle,colorPuzzle,oddPuzzle,moreGroupPuzzle];
+
+
+function results(){
+  const pct=S.answered?Math.round(S.right/S.answered*100):0;
+  if(pct===100)award("perfect");
+  const bonusCoins=(pct>=90?10:pct>=70?5:pct>=50?2:0)+(S.arrived?5:0);
+  save.coins+=bonusCoins;
+  if(save.coins>=100)award("rich");
+  if(S.score>save.best)save.best=S.score;
+  persist();
+  const tier=pct>=90?["🏆","Gold trophy"]:pct>=70?["🥈","Silver medal"]:pct>=50?["🥉","Bronze medal"]:["🎯","Keep practising"];
+  const away=S.D-S.pos;
+  app.innerHTML=`
+  <div class="card" style="text-align:center">
+    <p class="big pop">${S.arrived?"🥐":tier[0]}</p>
+    <h1>${S.arrived?"You reached the bakery!":tier[1]}</h1>
+    ${save.name?`<p><b>${esc(save.name)}</b></p>`:""}
+    <p>${S.arrived?`${tier[1]} · `:`You stopped ${away} step${away===1?"":"s"} from the bakery · `}${S.right} of ${S.answered} correct (${pct}%) · ${S.score} points · best streak ${S.maxStreak}</p>
+    <p><b>${bonusCoins?`+${bonusCoins} reward coins${S.arrived?" (includes +5 for reaching the bakery)":""}.`:"Score 50% or more, or reach the bakery, to earn reward coins."}</b></p>
+    ${S.newBadges.length?`<div class="badges" style="justify-content:center">${S.newBadges.map(k=>`<span class="badge pop">New: ${BADGES[k][0]}</span>`).join("")}</div>`:""}
+    <div class="row" style="justify-content:center"><button class="btn" id="again">Play again</button><button class="btn alt" id="menu">Main menu</button></div>
+  </div>`;
+  $("#again").onclick=()=>play(S.qs.length);
+  $("#menu").onclick=()=>home("");
+}
+(async()=>{
+  wallet();
+  app.innerHTML='<div class="card"><p>Loading questions…</p></div>';
+  if(save.bank&&save.custom===undefined)save.custom=true; // keep sets loaded by older versions
+  await loadPreset();applyBank();
+  home(!presetBank&&!(save.custom&&save.bank)?"Using the built-in sample questions. questions.json could not be loaded (it needs the game to be opened from a website or app, not as a local file).":"");
+})();
+</script>
+</body>
+</html>
